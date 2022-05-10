@@ -1,26 +1,29 @@
 @RestResource(urlMapping='/api/webhook/*')
 global with sharing class webhookSubscription {
-    public class pusher{
-        public String name;
-        public String email;
-        public pusher(String name, String email){
-            name = name;
-            email = email;
-        }
-    }
 
     @HttpPost
     global static void handleWebhook(){
         try{
-        RestRequest request = RestContext.request;
-        RestResponse response = RestContext.response;
-        
-        System.debug('Secret value Matched and source can be trusted');
-        JSONParser parser = JSON.createParser(request.requestBody.toString());
-        pusher ps;
-        // head_commit hc;
-        String repo;
-        while (parser.nextToken() != null) {
+            RestRequest request = RestContext.request;
+            RestResponse response = RestContext.response;
+        // fetching the body 
+        //get hash value from header 
+        // String hashedval = request.headers.get('X-Hub-Signature-256'); 
+        // System.debug('hashedval:'+ hashedval); 
+        // Blob bB = request.requestBody; 
+        // System.debug(bB.toString());
+        // Blob hmac = Crypto.generateMac('hmacSHA256', bB, Blob.valueOf('webhooktrial'));
+        // string hmacstring = 'sha2S6='+EncodingUtil.convertToHex(hmac);
+
+        // System.debug('hmac: '+EncodingUtil.convertToHex(hmac));
+
+        // if (hashedval == hmacstring) {
+        //     System.debug('Secret value Matched and source can be trusted');
+            JSONParser parser = JSON.createParser(request.requestBody.toString());
+            pusher ps;
+            // head_commit hc;
+            String repo;
+            while (parser.nextToken() != null) {
                 if(parser.getText() == 'pusher'){
                     System.debug('Inside pusher');
                     parser.nextToken();
@@ -53,9 +56,7 @@ global with sharing class webhookSubscription {
             // detail.Modified_Components__c = hc != null && hc.modified != null?String.join(hc.modified, ','): '';
             insert detail;
             response.statusCode = 200;
-            String ss = 'Run successfully..';
-            // response.responseBody = 'success';
-            response.responseBody = Blob.valueOf(JSON.serialize(ss));
+            response.responseBody = Blob.valueOf(JSON.serialize(new SFDCResponse('Success', 'Processed Successfully')));
         }
         // else {
         //     response.statusCode = 401;
@@ -64,6 +65,24 @@ global with sharing class webhookSubscription {
         // }
         catch(Exception e){
             System.debug('Exception happened: '+e.getMessage());
+        }
+    }
+
+    public class pusher{
+        public String name;
+        public String email;
+        public pusher(String name, String email){
+            name = name;
+            email = email;
+        }
+    }
+
+    public class SFDCResponse{
+        String response;
+        String message;
+        public SFDCResponse(String resp, String msg){
+            response = resp;
+            message = msg;
         }
     }
 }
